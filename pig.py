@@ -8,6 +8,7 @@ from itertools import cycle
 
 import time
 import argparse
+import psutil
 
 
 parser = argparse.ArgumentParser()
@@ -77,6 +78,9 @@ class Pig(QLabel):
         else:
             self.timer.stop()
 
+    def changeSpeed(self):
+        self.timer.setInterval(int(1 / psutil.cpu_times_percent(percpu=False).system * 5000))
+
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Escape:
             app.quit()
@@ -101,7 +105,10 @@ class Snorter():
         self.mediaObject.play()
 
 pig = Pig()
-
 pig.show()
+
+timer = QTimer()
+timer.timeout.connect(pig.changeSpeed)
+timer.start(2000)
 
 sys.exit(app.exec_())
