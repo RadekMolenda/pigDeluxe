@@ -41,7 +41,7 @@ class Pig(QLabel):
         QLabel.__init__(self)
         self.setStyleSheet("background: transparent")
         self.setPixmap(pigR)
-        self.setWindowFlags(Qt.SplashScreen)
+        self.setWindowFlags(Qt.SplashScreen | Qt.WindowStaysOnTopHint)
         self.setScaledContents(True)
         self.setFixedWidth(args.width)
         self.setFixedHeight(args.height)
