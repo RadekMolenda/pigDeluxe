@@ -6,6 +6,12 @@ from PySide.QtGui import *
 from PySide.phonon import Phonon
 
 import time
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--width', '-x', type=int, default=50, help='pig width')
+parser.add_argument('--height', '-y', type=int, default=50, help='pig height')
+args = parser.parse_args()
 
 app = QApplication(sys.argv)
 
@@ -20,6 +26,9 @@ class Pig(QLabel):
         self.setStyleSheet("background: transparent")
         self.setPixmap(pigR)
         self.setWindowFlags(Qt.SplashScreen)
+        self.setScaledContents(True)
+        self.setFixedWidth(args.width)
+        self.setFixedHeight(args.height)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAutoFillBackground(False)
         self.voice = Snorter(self)
