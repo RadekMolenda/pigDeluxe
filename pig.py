@@ -4,9 +4,11 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 
 from PySide.phonon import Phonon
+from itertools import cycle
 
 import time
 import argparse
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--width', '-x', type=int, default=50, help='pig width')
@@ -19,6 +21,19 @@ message = QTime.currentTime()
 
 pigR = QPixmap("./pigR.png")
 pigL = QPixmap("./pigL.png")
+pigR2 = QPixmap("./pigR2.png")
+pigL2 = QPixmap("./pigL2.png")
+pigRight = [pigR, pigR2]
+pigLeft = [pigL, pigL2]
+
+class PigMove():
+    def __init__(self, positions):
+        self.positions = positions
+        self.current = 0
+
+    def move(self):
+        self.current = (1 + self.current) % len(self.positions)
+        return self.positions[self.current]
 
 class Pig(QLabel):
     def __init__(self):
@@ -35,15 +50,17 @@ class Pig(QLabel):
         self.autoMode = False
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.randomMove)
+        self.rightMove = PigMove(pigRight)
+        self.leftMove = PigMove(pigLeft)
 
     def moveRight(self):
         self.snort()
-        self.setPixmap(pigR)
+        self.setPixmap(self.rightMove.move())
         self.move(self.pos() + QPoint(1, 0))
 
     def moveLeft(self):
         self.snort()
-        self.setPixmap(pigL)
+        self.setPixmap(self.leftMove.move())
         self.move(self.pos() + QPoint(-1, 0))
 
     def randomMove(self):
