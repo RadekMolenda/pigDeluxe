@@ -94,7 +94,7 @@ class Pig(QLabel):
 
     def mouseMoveEvent(self, e):
         if e.buttons() & Qt.LeftButton:
-            self.move(self.mapToParent(e.pos() - self.dragOffset))
+            self.move(e.globalPos() - self.dragOffset)
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Escape:
