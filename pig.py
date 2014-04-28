@@ -81,6 +81,13 @@ class Pig(QLabel):
     def changeSpeed(self):
         self.timer.setInterval(int(1 / psutil.cpu_times_percent(percpu=False).system * 5000))
 
+    def mousePressEvent(self, e):
+        self.dragOffset = e.pos()
+
+    def mouseMoveEvent(self, e):
+        if e.buttons() & Qt.LeftButton:
+            self.move(self.mapToParent(e.pos() - self.dragOffset))
+
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Escape:
             app.quit()
