@@ -90,15 +90,22 @@ class Pig(QLabel):
             self.toggleAutomode()
 
 class Snorter():
+    MEDIA_FILES = ['./pig1.mp3', './pig2.mp3']
+
     def __init__(self, pig):
-        self.audioOutput = Phonon.AudioOutput(Phonon.MusicCategory, pig)
-        self.mediaObject = Phonon.MediaObject(pig)
-        self.mediaSources = [Phonon.MediaSource("./pig1.mp3"), Phonon.MediaSource("./pig2.mp3")]
-        Phonon.createPath(self.mediaObject, self.audioOutput)
+        self.mediaObjects = []
+        for mediaFile in self.MEDIA_FILES:
+            source = Phonon.MediaSource(mediaFile)
+            audioOutput = Phonon.AudioOutput(Phonon.MusicCategory, pig)
+            mediaObject = Phonon.MediaObject(pig)
+            mediaObject.setCurrentSource(source)
+            Phonon.createPath(mediaObject, audioOutput)
+            self.mediaObjects.append(mediaObject)
 
     def snort(self):
-        self.mediaObject.setCurrentSource(random.choice(self.mediaSources))
-        self.mediaObject.play()
+        mediaObject = random.choice(self.mediaObjects)
+        if mediaObject.state() == Phonon.StoppedState:
+            mediaObject.play()
 
 pig = Pig()
 
