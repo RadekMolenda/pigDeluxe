@@ -79,7 +79,13 @@ class Pig(QLabel):
             self.timer.stop()
 
     def changeSpeed(self):
-        self.timer.setInterval(int(1 / psutil.cpu_times_percent(percpu=False).system * 5000))
+        interval = int(1 / psutil.cpu_times_percent(percpu=False).system * 5000)
+        if interval < 500:
+            self.voice.panic()
+        else:
+            self.voice.calmDown()
+
+        self.timer.setInterval(interval)
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Escape:
@@ -95,21 +101,26 @@ class Pig(QLabel):
 
 class Snorter():
     MEDIA_FILES = ['./pig1.mp3', './pig2.mp3']
+    PANIC_MEDIA_FILES = ['./pig1_panic.mp3', './pig2_panic.mp3']
 
     def __init__(self, pig):
-        self.mediaObjects = []
-        for mediaFile in self.MEDIA_FILES:
-            source = Phonon.MediaSource(mediaFile)
-            audioOutput = Phonon.AudioOutput(Phonon.MusicCategory, pig)
-            mediaObject = Phonon.MediaObject(pig)
-            mediaObject.setCurrentSource(source)
-            Phonon.createPath(mediaObject, audioOutput)
-            self.mediaObjects.append(mediaObject)
+        audioOutput = Phonon.AudioOutput(Phonon.MusicCategory, pig)
+        self.mediaObject = Phonon.MediaObject(pig)
+        Phonon.createPath(self.mediaObject, audioOutput)
+        self.calmDown()
 
     def snort(self):
-        mediaObject = random.choice(self.mediaObjects)
-        if mediaObject.state() == Phonon.StoppedState:
-            mediaObject.play()
+        random.shuffle(self.mediaFiles)
+        if self.mediaObject.state() == Phonon.StoppedState:
+            self.mediaObject.enqueue(self.mediaFiles[0])
+            self.mediaObject.play()
+
+    def panic(self):
+        self.mediaFiles = list(map(lambda x: Phonon.MediaSource(x), self.PANIC_MEDIA_FILES))
+
+    def calmDown(self):
+        self.mediaFiles = list(map(lambda x: Phonon.MediaSource(x), self.MEDIA_FILES))
+
 
 pig = Pig()
 pig.show()
