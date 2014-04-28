@@ -1,4 +1,5 @@
 import sys
+import random
 from PySide.QtCore import *
 from PySide.QtGui import *
 
@@ -50,11 +51,11 @@ class Snorter():
     def __init__(self, pig):
         self.audioOutput = Phonon.AudioOutput(Phonon.MusicCategory, pig)
         self.mediaObject = Phonon.MediaObject(pig)
-        self.mediaSource = Phonon.MediaSource("./pig1.mp3")
+        self.mediaSources = [Phonon.MediaSource("./pig1.mp3"), Phonon.MediaSource("./pig2.mp3")]
         Phonon.createPath(self.mediaObject, self.audioOutput)
-        self.mediaObject.enqueue(self.mediaSource)
 
     def snort(self):
+        self.mediaObject.setCurrentSource(random.choice(self.mediaSources))
         self.mediaObject.play()
 
 pig = Pig()
