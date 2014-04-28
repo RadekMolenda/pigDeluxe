@@ -113,7 +113,7 @@ class Pig(QLabel):
             self.timer.stop()
 
     def changeSpeed(self):
-        interval = int(1 / psutil.cpu_times_percent(percpu=False).system * 5000)
+        interval = int(1 / (psutil.cpu_times_percent(percpu=False).system + 1) * 5000)
         if interval < 500:
             self.voice.panic()
         else:
