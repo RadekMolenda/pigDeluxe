@@ -29,6 +29,20 @@ pigL2 = QPixmap("./pigL2.png")
 pigRight = [pigR, pigR2]
 pigLeft = [pigL, pigL2]
 
+class PigTarget():
+    def __init__(self, pig):
+        self.pig = pig
+        self.position = None
+
+    def reached(self):
+        return self.pig.pos() == self.position
+
+    def pickPosition(self):
+        pos = self.pig.pos()
+        geo = app.desktop().screenGeometry(pos)
+        new = random.randint(geo.left(), geo.right())
+        self.position = QPoint(new, pos.y())
+
 class PigMove():
     def __init__(self, positions):
         self.positions = positions
@@ -52,23 +66,41 @@ class Pig(QLabel):
         self.voice = Snorter(self)
         self.autoMode = True
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.randomMove)
+        self.movingRight = True
+        self.movingLeft = False
+        self.timer.timeout.connect(self.pigMove)
         self.rightMove = PigMove(pigRight)
         self.leftMove = PigMove(pigLeft)
+        self.target = PigTarget(self)
         self.timer.start(1000)
 
     def moveRight(self):
         self.snort()
         self.setPixmap(self.rightMove.move())
         self.move(self.pos() + QPoint(1, 0))
+        self.movingRight = True
+        self.movingLeft = False
 
     def moveLeft(self):
         self.snort()
         self.setPixmap(self.leftMove.move())
         self.move(self.pos() + QPoint(-1, 0))
+        self.movingLeft = True
+        self.movingRight = False
 
-    def randomMove(self):
-        random.choice([self.moveRight, self.moveLeft])()
+    def pigMove(self):
+        if self.target.reached() or self.target.position is None:
+            self.target.pickPosition()
+        else:
+            self.moveToTarget()
+
+    def moveToTarget(self):
+        targetPos = self.target.position
+        pigPos = self.pos()
+        if pigPos.x() < targetPos.x():
+            self.moveRight()
+        else:
+            self.moveLeft()
 
     def snort(self):
         self.voice.snort()
@@ -87,7 +119,8 @@ class Pig(QLabel):
         else:
             self.voice.calmDown()
 
-        self.timer.setInterval(interval)
+        if self.timer.isActive():
+            self.timer.setInterval(interval)
 
     def mousePressEvent(self, e):
         self.dragOffset = e.pos()
@@ -133,7 +166,6 @@ class Snorter():
 
 pig = Pig()
 pig.show()
-
 timer = QTimer()
 timer.timeout.connect(pig.changeSpeed)
 timer.start(2000)
