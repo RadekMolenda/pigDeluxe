@@ -48,11 +48,12 @@ class Pig(QLabel):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAutoFillBackground(False)
         self.voice = Snorter(self)
-        self.autoMode = False
+        self.autoMode = True
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.randomMove)
         self.rightMove = PigMove(pigRight)
         self.leftMove = PigMove(pigLeft)
+        self.timer.start(1000)
 
     def moveRight(self):
         self.snort()
@@ -65,17 +66,16 @@ class Pig(QLabel):
         self.move(self.pos() + QPoint(-1, 0))
 
     def randomMove(self):
-        action = random.choice([self.moveRight, self.moveLeft])
-        action()
+        random.choice([self.moveRight, self.moveLeft])()
 
     def snort(self):
         self.voice.snort()
 
     def toggleAutomode(self):
         self.autoMode = not self.autoMode
-        if self.autoMode:
+        if self.autoMode and not self.timer.isActive():
             self.timer.start(1000)
-        else:
+        elif self.timer.isActive():
             self.timer.stop()
 
     def changeSpeed(self):
