@@ -105,5 +105,3 @@ pig = Pig()
 pig.show()
 
 sys.exit(app.exec_())
-
-
