@@ -142,8 +142,9 @@ class Pig(QLabel):
             self.toggleAutomode()
 
 class Snorter():
-    MEDIA_FILES = ['./pig1.mp3', './pig2.mp3']
-    PANIC_MEDIA_FILES = ['./pig1_panic.mp3', './pig2_panic.mp3']
+    transform = lambda aList: list(map(lambda x: Phonon.MediaSource(x), aList))
+    MEDIA_FILES = transform(['./pig1.mp3', './pig2.mp3'])
+    PANIC_MEDIA_FILES = transform(['./pig1_panic.mp3', './pig2_panic.mp3'])
 
     def __init__(self, pig):
         audioOutput = Phonon.AudioOutput(Phonon.MusicCategory, pig)
@@ -152,16 +153,16 @@ class Snorter():
         self.calmDown()
 
     def snort(self):
-        random.shuffle(self.mediaFiles)
         if self.mediaObject.state() == Phonon.StoppedState:
+            random.shuffle(self.mediaFiles)
             self.mediaObject.enqueue(self.mediaFiles[0])
             self.mediaObject.play()
 
     def panic(self):
-        self.mediaFiles = list(map(lambda x: Phonon.MediaSource(x), self.PANIC_MEDIA_FILES))
+        self.mediaFiles = self.PANIC_MEDIA_FILES
 
     def calmDown(self):
-        self.mediaFiles = list(map(lambda x: Phonon.MediaSource(x), self.MEDIA_FILES))
+        self.mediaFiles = self.MEDIA_FILES
 
 
 pig = Pig()
