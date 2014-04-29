@@ -199,8 +199,19 @@ class Pig(QLabel):
 
 class Snorter():
     transform = lambda aList: list(map(lambda x: Phonon.MediaSource(x), aList))
-    MEDIA_FILES = transform(['./pig1.mp3', './pig2.mp3'])
-    PANIC_MEDIA_FILES = transform(['./pig1_panic.mp3', './pig2_panic.mp3'])
+    MEDIA_FILES = transform([
+        './pig1.mp3',
+        './pig2.mp3',
+        './pig3.mp3',
+        './pig4.mp3'
+    ])
+    PANIC_MEDIA_FILES = transform([
+        './pig1_panic.mp3',
+        './pig2_panic.mp3',
+        './pig3_panic.mp3',
+        './pig4_panic.mp3',
+        './pig5_panic.mp3'
+    ])
 
     def __init__(self, pig):
         audioOutput = Phonon.AudioOutput(Phonon.MusicCategory, pig)
