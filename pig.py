@@ -20,15 +20,6 @@ args = parser.parse_args()
 
 app = QApplication(sys.argv)
 
-message = QTime.currentTime()
-
-pigR = QPixmap("./pigR.png")
-pigL = QPixmap("./pigL.png")
-pigR2 = QPixmap("./pigR2.png")
-pigL2 = QPixmap("./pigL2.png")
-pigRight = [pigR, pigR2]
-pigLeft = [pigL, pigL2]
-
 class PigTarget():
     def __init__(self, pig):
         self.pig = pig
@@ -43,50 +34,77 @@ class PigTarget():
         new = random.randint(geo.left(), geo.right())
         self.position = QPoint(new, pos.y())
 
-class PigMove():
-    def __init__(self, positions):
-        self.positions = positions
-        self.current = 0
+class PigAnimate():
+    def __init__(self):
+        self.rightFrames = cycle([QPixmap("./pigR.png"), QPixmap("./pigR2.png")])
+        self.leftFrames = cycle([QPixmap("./pigL.png"), QPixmap("./pigL2.png")])
 
-    def move(self):
-        self.current = (1 + self.current) % len(self.positions)
-        return self.positions[self.current]
+    def moveRight(self):
+        return next(self.rightFrames)
+
+    def moveLeft(self):
+        return next(self.leftFrames)
+
+class PigAutoMode():
+    def __init__(self, pig, enabled=True):
+        self.timer = QTimer(pig)
+        self.enabled = enabled
+        self.timer.timeout.connect(pig.pigMove)
+        self.timer.start(1000)
+
+    def toggle(self):
+        self.enabled = not self.enabled
+        if self.enabled and not self.timer.isActive():
+            self.timer.start(1000)
+        elif self.timer.isActive():
+            self.timer.stop()
+
+class PigCpuGuard:
+    def __init__(self, timer):
+        self.timer = timer
+
+    def changeSpeed(self):
+        interval = int(1 / (psutil.cpu_times_percent(percpu=False).system + 1) * 5000)
+
+        if self.timer.isActive():
+            self.timer.setInterval(interval)
+
 
 class Pig(QLabel):
     def __init__(self):
         QLabel.__init__(self)
+        self.voice = Snorter(self)
+        self.autoMode = PigAutoMode(self)
+        self.animation = PigAnimate()
+        self.target = PigTarget(self)
+        self.__setup()
+
+    def setup(self):
         self.setStyleSheet("background: transparent")
-        self.setPixmap(pigR)
         self.setWindowFlags(Qt.SplashScreen | Qt.WindowStaysOnTopHint)
         self.setScaledContents(True)
         self.setFixedWidth(args.width)
         self.setFixedHeight(args.height)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAutoFillBackground(False)
-        self.voice = Snorter(self)
-        self.autoMode = True
-        self.timer = QTimer(self)
-        self.movingRight = True
-        self.movingLeft = False
-        self.timer.timeout.connect(self.pigMove)
-        self.rightMove = PigMove(pigRight)
-        self.leftMove = PigMove(pigLeft)
-        self.target = PigTarget(self)
-        self.timer.start(1000)
+
+    __setup = setup
+
+    def checkTimer(self):
+        if self.autoMode.timer.interval() < 500:
+            self.voice.panic()
+        else:
+            self.voice.calmDown()
 
     def moveRight(self):
         self.snort()
-        self.setPixmap(self.rightMove.move())
+        self.setPixmap(self.animation.moveRight())
         self.move(self.pos() + QPoint(1, 0))
-        self.movingRight = True
-        self.movingLeft = False
 
     def moveLeft(self):
         self.snort()
-        self.setPixmap(self.leftMove.move())
+        self.setPixmap(self.animation.moveLeft())
         self.move(self.pos() + QPoint(-1, 0))
-        self.movingLeft = True
-        self.movingRight = False
 
     def pigMove(self):
         if self.target.reached() or self.target.position is None:
@@ -105,29 +123,15 @@ class Pig(QLabel):
     def snort(self):
         self.voice.snort()
 
-    def toggleAutomode(self):
-        self.autoMode = not self.autoMode
-        if self.autoMode and not self.timer.isActive():
-            self.timer.start(1000)
-        elif self.timer.isActive():
-            self.timer.stop()
-
-    def changeSpeed(self):
-        interval = int(1 / (psutil.cpu_times_percent(percpu=False).system + 1) * 5000)
-        if interval < 500:
-            self.voice.panic()
-        else:
-            self.voice.calmDown()
-
-        if self.timer.isActive():
-            self.timer.setInterval(interval)
-
     def mousePressEvent(self, e):
         self.dragOffset = e.pos()
 
     def mouseMoveEvent(self, e):
         if e.buttons() & Qt.LeftButton:
             self.move(e.globalPos() - self.dragOffset)
+
+    def mouseReleaseEvent(self, e):
+        self.target.pickPosition()
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Escape:
@@ -139,7 +143,7 @@ class Pig(QLabel):
         elif e.key() == Qt.Key_Return:
             self.snort()
         elif e.key() == Qt.Key_A:
-            self.toggleAutomode()
+            self.autoMode.toggle()
 
 class Snorter():
     transform = lambda aList: list(map(lambda x: Phonon.MediaSource(x), aList))
@@ -168,7 +172,9 @@ class Snorter():
 pig = Pig()
 pig.show()
 timer = QTimer()
-timer.timeout.connect(pig.changeSpeed)
+guard = PigCpuGuard(pig.autoMode.timer)
+timer.timeout.connect(pig.checkTimer)
+timer.timeout.connect(guard.changeSpeed)
 timer.start(2000)
 
 sys.exit(app.exec_())
