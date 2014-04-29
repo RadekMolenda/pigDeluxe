@@ -7,6 +7,7 @@ from PySide.QtGui import *
 
 from PySide.phonon import Phonon
 from itertools import cycle
+from pig_gravity import pigGravity, pigDrag
 
 import time
 import argparse
@@ -58,6 +59,52 @@ class PigAutoMode():
             self.timer.start(1000)
         elif self.timer.isActive():
             self.timer.stop()
+
+    def hookKeyPress(self, event):
+        self.toggle()
+
+class PigForce:
+    def __init__(self, rx, ry):
+        self.rx = rx
+        self.ry = ry
+        self.pigDrag = pigDrag([self.rx, self.ry])
+        self.pigGravity = pigGravity([self.rx, self.ry])
+    def affect(self, vector):
+        x, y = vector
+        self.rx, self.ry = self.pigDrag(self.rx, self.ry)
+        self.rx, self.ry = self.pigGravity(self.rx, self.ry)
+        return [x + self.rx, y - self.ry]
+
+class PigJump:
+    def __init__(self, pig):
+        self.fps = 60.0
+        self.timer = QTimer(pig)
+        self.pig = pig
+        self.start = pig.pos()
+        self.force = PigForce((random.random() - 0.5) * 10, random.random() * 40)
+        self.nextPoint = [self.start.x(), self.start.y()]
+        self.stopRy = - self.force.ry + (random.random() * 0.5) * 2
+
+    def movement(self, vector):
+        return self.force.affect(self.nextPoint)
+
+    def interval(self):
+        return int(1000 / self.fps)
+
+    def projectLocation(self):
+        return list(map(lambda x: int(x), self.nextPoint))
+
+    def move(self):
+        self.nextPoint = self.movement(self.nextPoint)
+        self.pig.move(QPoint(*self.projectLocation()))
+        if self.force.ry <= self.stopRy:
+            self.timer.stop()
+
+    def jump(self):
+        if not self.timer.isActive():
+            self.timer.timeout.connect(lambda: self.move())
+            self.timer.start(self.interval())
+
 
 class PigCpuGuard:
     def __init__(self, timer):
@@ -112,6 +159,9 @@ class Pig(QLabel):
         else:
             self.moveToTarget()
 
+    def jump(self):
+        PigJump(self).jump()
+
     def moveToTarget(self):
         targetPos = self.target.position
         pigPos = self.pos()
@@ -143,7 +193,9 @@ class Pig(QLabel):
         elif e.key() == Qt.Key_Return:
             self.snort()
         elif e.key() == Qt.Key_A:
-            self.autoMode.toggle()
+            self.autoMode.hookKeyPress(e)
+        elif e.key() == Qt.Key_J:
+            self.jump()
 
 class Snorter():
     transform = lambda aList: list(map(lambda x: Phonon.MediaSource(x), aList))
@@ -168,13 +220,13 @@ class Snorter():
     def calmDown(self):
         self.mediaFiles = self.MEDIA_FILES
 
+if __name__ == '__main__':
+    pig = Pig()
+    pig.show()
+    timer = QTimer()
+    guard = PigCpuGuard(pig.autoMode.timer)
+    timer.timeout.connect(pig.checkTimer)
+    timer.timeout.connect(guard.changeSpeed)
+    timer.start(2000)
 
-pig = Pig()
-pig.show()
-timer = QTimer()
-guard = PigCpuGuard(pig.autoMode.timer)
-timer.timeout.connect(pig.checkTimer)
-timer.timeout.connect(guard.changeSpeed)
-timer.start(2000)
-
-sys.exit(app.exec_())
+    sys.exit(app.exec_())
