@@ -6,7 +6,6 @@ def pigGravity(vector):
     return change
 
 def pigDrag(vector):
-
     rx, ry = vector
     changeX = - 0.01 * rx
     def change(x, y):
