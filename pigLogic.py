@@ -1,8 +1,14 @@
 from PySide.QtGui import QPixmap
-from pigPicture import PigPicture
+from PySide.QtCore import Qt
+from pigSkin import PigSkin
+
 class Pig:
     def __init__(self, frame):
-        self.picture = PigPicture(frame)
+        self.frame = frame
+        self.skin = PigSkin(frame)
+
+    def trap(self):
+        self.frame.setPixmap(self.skin.current)
 
     def handleKeyPressEvent(self, event):
-        self.picture.handleKeyPressEvent(event)
+        self.skin.handleKeyPressEvent(event)

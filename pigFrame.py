@@ -21,8 +21,9 @@ class PigFrame(QLabel):
     __setup = setup
 
     def trap(self, pig):
-        self.setPixmap(pig.picture.current)
         self.pig = pig
+        self.pig.trap()
+
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Escape:
